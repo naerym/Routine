@@ -1,0 +1,703 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Thomas Routine">
+<title>Thomas — Daily Routine</title>
+<style>
+:root {
+  --bg: #f0eeff;
+  --surface: #ffffff;
+  --surface2: #f7f5ff;
+  --border: #e4deff;
+  --accent: #6c5ce7;
+  --accent2: #00b894;
+  --accent3: #e17055;
+  --accent4: #fd79a8;
+  --accent5: #fdcb6e;
+  --text: #2d3436;
+  --muted: #74788d;
+  --work: #6c5ce7;
+  --gym: #00b894;
+  --personal: #e17055;
+  --meeting: #fd79a8;
+  --rest: #b2bec3;
+  --morning: #f9a825;
+  --client: #0984e3;
+  --shadow: 0 2px 12px rgba(108,92,231,0.07);
+  --shadow-md: 0 4px 20px rgba(108,92,231,0.13);
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  min-height: 100vh;
+  padding: 24px 18px 48px;
+  max-width: 920px;
+  margin: 0 auto;
+}
+.date-display { font-size:11px; color:var(--accent); font-weight:700; text-transform:uppercase; letter-spacing:1.2px; margin-bottom:4px; }
+h1 { font-size:26px; font-weight:800; letter-spacing:-0.5px; margin-bottom:2px; }
+.subtitle { font-size:13px; color:var(--muted); margin-bottom:18px; }
+
+.stats-row { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:20px; }
+.stat-chip { background:var(--surface); border:1.5px solid var(--border); border-radius:100px; padding:6px 14px; font-size:12px; font-weight:600; color:var(--muted); box-shadow:var(--shadow); }
+.stat-chip b { color:var(--accent); }
+
+.tabs { display:flex; gap:4px; background:var(--surface); border:1.5px solid var(--border); border-radius:14px; padding:5px; margin-bottom:22px; box-shadow:var(--shadow); overflow-x:auto; }
+.tab { padding:8px 15px; border-radius:10px; font-size:13px; font-weight:600; cursor:pointer; color:var(--muted); border:none; background:none; transition:all .2s; white-space:nowrap; flex-shrink:0; }
+.tab.active { background:var(--accent); color:#fff; box-shadow:0 2px 8px rgba(108,92,231,.3); }
+.tab:hover:not(.active) { background:var(--surface2); color:var(--text); }
+.tab-content { display:none; }
+.tab-content.active { display:block; }
+
+.progress-section { background:var(--surface); border:1.5px solid var(--border); border-radius:16px; padding:16px 20px; margin-bottom:18px; box-shadow:var(--shadow); }
+.progress-label { display:flex; justify-content:space-between; font-size:13px; font-weight:600; color:var(--muted); margin-bottom:10px; }
+.progress-label b { color:var(--accent); }
+.progress-bar { height:8px; background:var(--surface2); border-radius:100px; overflow:hidden; border:1px solid var(--border); }
+.progress-fill { height:100%; border-radius:100px; background:linear-gradient(90deg,var(--accent),var(--accent2)); transition:width .5s cubic-bezier(.4,0,.2,1); }
+
+.day-selector { display:flex; gap:6px; margin-bottom:18px; flex-wrap:wrap; }
+.day-btn { padding:7px 16px; border-radius:100px; font-size:13px; font-weight:600; cursor:pointer; background:var(--surface); color:var(--muted); border:1.5px solid var(--border); transition:all .2s; box-shadow:var(--shadow); }
+.day-btn.active { background:var(--accent); color:#fff; border-color:var(--accent); }
+.day-btn:hover:not(.active) { border-color:var(--accent); color:var(--accent); }
+
+.section-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; }
+.section-title { font-size:15px; font-weight:700; }
+.reset-btn { font-size:12px; color:var(--muted); background:none; border:1px solid var(--border); cursor:pointer; padding:5px 12px; border-radius:8px; font-weight:500; transition:all .2s; }
+.reset-btn:hover { color:var(--accent3); border-color:var(--accent3); }
+
+.timeline { display:flex; flex-direction:column; gap:7px; }
+.time-block { display:flex; align-items:center; gap:12px; padding:13px 16px; border-radius:14px; background:var(--surface); border:1.5px solid var(--border); transition:all .2s; position:relative; overflow:hidden; box-shadow:var(--shadow); }
+.time-block::before { content:''; position:absolute; left:0; top:0; bottom:0; width:4px; border-radius:3px 0 0 3px; }
+.time-block.work::before { background:var(--work); }
+.time-block.gym::before { background:var(--gym); }
+.time-block.personal::before { background:var(--personal); }
+.time-block.meeting::before { background:var(--meeting); }
+.time-block.rest::before { background:var(--rest); }
+.time-block.morning::before { background:var(--morning); }
+.time-block.client::before { background:var(--client); }
+.time-block:hover { border-color:var(--accent); transform:translateX(2px); box-shadow:var(--shadow-md); }
+.time-block.done { opacity:.48; }
+.time-block.done .block-title { text-decoration:line-through; }
+.time-col { min-width:68px; font-size:11px; color:var(--muted); font-weight:600; line-height:1.6; flex-shrink:0; }
+.block-body { flex:1; min-width:0; }
+.block-title { font-size:14px; font-weight:700; margin-bottom:2px; }
+.block-sub { font-size:11px; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.block-tag { font-size:10px; font-weight:700; padding:3px 9px; border-radius:100px; text-transform:uppercase; letter-spacing:.5px; flex-shrink:0; }
+.tag-work { background:rgba(108,92,231,.12); color:var(--work); }
+.tag-gym { background:rgba(0,184,148,.12); color:var(--gym); }
+.tag-personal { background:rgba(225,112,85,.12); color:var(--personal); }
+.tag-meeting { background:rgba(253,121,168,.12); color:var(--meeting); }
+.tag-morning { background:rgba(249,168,37,.12); color:var(--morning); }
+.tag-rest { background:rgba(178,190,195,.2); color:#636e72; }
+.tag-client { background:rgba(9,132,227,.12); color:var(--client); }
+.check-btn { background:none; border:2px solid var(--border); border-radius:50%; width:24px; height:24px; cursor:pointer; flex-shrink:0; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:700; color:transparent; transition:all .2s; }
+.check-btn:hover { border-color:var(--accent2); }
+.check-btn.checked { background:var(--accent2); border-color:var(--accent2); color:#fff; }
+
+.supps-section { margin-top:18px; background:var(--surface); border:1.5px solid var(--border); border-radius:16px; padding:16px 18px; box-shadow:var(--shadow); }
+.supps-section h3 { font-size:11px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:.8px; margin-bottom:12px; }
+.supps-row { display:flex; gap:10px; flex-wrap:wrap; }
+.supp-pill { display:flex; align-items:center; gap:8px; background:var(--surface2); border:1.5px solid var(--border); border-radius:100px; padding:8px 16px; font-size:13px; font-weight:600; cursor:pointer; transition:all .2s; color:var(--muted); }
+.supp-pill.taken { background:rgba(0,184,148,.1); border-color:var(--accent2); color:var(--accent2); }
+.supp-dot { width:8px; height:8px; border-radius:50%; background:var(--border); flex-shrink:0; transition:background .2s; }
+.supp-pill.taken .supp-dot { background:var(--accent2); }
+
+.info-box { background:linear-gradient(135deg,rgba(108,92,231,.07),rgba(0,184,148,.07)); border:1.5px solid var(--border); border-radius:14px; padding:14px 18px; margin-bottom:18px; }
+.info-box-title { font-size:11px; font-weight:700; color:var(--accent); text-transform:uppercase; letter-spacing:.8px; margin-bottom:6px; }
+
+.clients-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(300px,1fr)); gap:14px; }
+.client-card { background:var(--surface); border:1.5px solid var(--border); border-radius:18px; overflow:hidden; box-shadow:var(--shadow); transition:box-shadow .2s; }
+.client-card:hover { box-shadow:var(--shadow-md); }
+.client-card.all-done { border-color:var(--accent2); }
+.client-header { padding:14px 16px 12px; display:flex; align-items:center; gap:12px; border-bottom:1px solid var(--border); }
+.client-avatar { width:38px; height:38px; border-radius:11px; display:flex; align-items:center; justify-content:center; font-size:15px; font-weight:800; color:#fff; flex-shrink:0; }
+.client-name { font-size:15px; font-weight:800; }
+.client-progress { font-size:11px; color:var(--muted); font-weight:500; margin-top:1px; }
+.client-status { margin-left:auto; font-size:11px; font-weight:700; padding:4px 10px; border-radius:100px; background:var(--surface2); color:var(--muted); border:1px solid var(--border); }
+.client-status.done-status { background:rgba(0,184,148,.1); color:var(--accent2); border-color:var(--accent2); }
+.client-rounds { padding:12px 16px; }
+.round-label { font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.8px; color:var(--muted); margin-bottom:8px; margin-top:12px; }
+.round-label:first-child { margin-top:0; }
+.client-task { display:flex; align-items:center; gap:10px; padding:8px 0; border-bottom:1px solid var(--border); cursor:pointer; transition:opacity .2s; }
+.client-task:last-child { border-bottom:none; }
+.client-task.done { opacity:.42; }
+.client-task.done .ct-name { text-decoration:line-through; }
+.ct-check { width:20px; height:20px; border-radius:6px; border:1.5px solid var(--border); display:flex; align-items:center; justify-content:center; font-size:10px; font-weight:700; color:transparent; flex-shrink:0; transition:all .2s; }
+.client-task.done .ct-check { background:var(--accent2); border-color:var(--accent2); color:#fff; }
+.ct-name { font-size:13px; font-weight:500; }
+
+.habits-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(250px,1fr)); gap:14px; }
+.habit-card { background:var(--surface); border:1.5px solid var(--border); border-radius:18px; padding:18px; box-shadow:var(--shadow); }
+.habit-card h3 { font-size:11px; text-transform:uppercase; letter-spacing:1px; font-weight:700; margin-bottom:14px; }
+.habit-item { display:flex; align-items:center; gap:10px; padding:8px 0; border-bottom:1px solid var(--border); cursor:pointer; transition:opacity .2s; }
+.habit-item:last-child { border-bottom:none; }
+.habit-item.done { opacity:.42; }
+.habit-item.done .habit-name { text-decoration:line-through; }
+.habit-check { width:20px; height:20px; border-radius:6px; border:1.5px solid var(--border); display:flex; align-items:center; justify-content:center; font-size:10px; font-weight:700; color:transparent; flex-shrink:0; transition:all .2s; }
+.habit-item.done .habit-check { background:var(--accent2); border-color:var(--accent2); color:#fff; }
+.habit-name { font-size:13px; font-weight:500; line-height:1.35; }
+
+.week-grid { display:grid; grid-template-columns:repeat(7,1fr); gap:7px; }
+.week-day { background:var(--surface); border:1.5px solid var(--border); border-radius:13px; padding:11px 8px; min-height:150px; box-shadow:var(--shadow); }
+.week-day.today { border-color:var(--accent); background:linear-gradient(135deg,#fff,#f0eeff); }
+.week-day-name { font-size:10px; font-weight:800; text-transform:uppercase; letter-spacing:.8px; color:var(--muted); margin-bottom:7px; }
+.week-day.today .week-day-name { color:var(--accent); }
+.week-event { font-size:10px; padding:3px 6px; border-radius:5px; margin-bottom:3px; font-weight:600; line-height:1.3; }
+.we-work { background:rgba(108,92,231,.12); color:#6c5ce7; }
+.we-gym { background:rgba(0,184,148,.12); color:#00b894; }
+.we-personal { background:rgba(225,112,85,.12); color:#e17055; }
+.we-meeting { background:rgba(253,121,168,.12); color:#fd79a8; }
+.we-morning { background:rgba(249,168,37,.12); color:#f9a825; }
+.we-client { background:rgba(9,132,227,.12); color:#0984e3; }
+
+.goals-wrap { max-width:600px; }
+.goal-section { margin-bottom:18px; }
+.goal-label { font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.8px; color:var(--muted); margin-bottom:7px; display:block; }
+.goal-input { width:100%; background:var(--surface); border:1.5px solid var(--border); border-radius:13px; padding:13px 15px; color:var(--text); font-size:14px; font-family:inherit; resize:vertical; outline:none; transition:border-color .2s; min-height:85px; box-shadow:var(--shadow); }
+.goal-input:focus { border-color:var(--accent); }
+.goal-input::placeholder { color:var(--muted); }
+.save-btn { background:var(--accent); color:#fff; border:none; border-radius:10px; padding:12px 24px; font-size:14px; font-weight:700; cursor:pointer; transition:all .2s; box-shadow:0 4px 12px rgba(108,92,231,.25); }
+.save-btn:hover { opacity:.88; transform:translateY(-1px); }
+
+@media (max-width:640px) {
+  body { padding:14px 12px 36px; }
+  .week-grid { grid-template-columns:repeat(3,1fr); }
+  .habits-grid, .clients-grid { grid-template-columns:1fr; }
+  h1 { font-size:22px; }
+  .tabs { gap:2px; }
+  .tab { padding:7px 11px; font-size:12px; }
+}
+</style>
+</head>
+<body>
+
+<div class="date-display" id="dateDisplay"></div>
+<h1>Thomas's Routine</h1>
+<p class="subtitle">Locked in. Sleep target: 10:30PM → 6:30AM (8hrs)</p>
+
+<div class="stats-row">
+  <div class="stat-chip">Protein: <b>170g / day</b></div>
+  <div class="stat-chip">Calories: <b>~3,200 / day</b></div>
+  <div class="stat-chip">Clients: <b>5 active</b></div>
+  <div class="stat-chip">Sleep target: <b>10:30PM</b></div>
+</div>
+
+<div class="tabs">
+  <button class="tab active" onclick="switchTab('today')">Today</button>
+  <button class="tab" onclick="switchTab('clients')">Clients</button>
+  <button class="tab" onclick="switchTab('habits')">Habits</button>
+  <button class="tab" onclick="switchTab('week')">Week</button>
+  <button class="tab" onclick="switchTab('goals')">Goals</button>
+</div>
+
+<!-- TODAY -->
+<div class="tab-content active" id="tab-today">
+  <div class="progress-section">
+    <div class="progress-label"><span>Daily schedule</span><b id="progressText">0 / 0 done</b></div>
+    <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+  </div>
+  <div class="day-selector">
+    <button class="day-btn" onclick="setDay('mon')">Mon</button>
+    <button class="day-btn" onclick="setDay('tue')">Tue</button>
+    <button class="day-btn" onclick="setDay('wed')">Wed</button>
+    <button class="day-btn" onclick="setDay('thu')">Thu</button>
+    <button class="day-btn" onclick="setDay('fri')">Fri</button>
+    <button class="day-btn" onclick="setDay('sat')">Sat</button>
+    <button class="day-btn" onclick="setDay('sun')">Sun</button>
+  </div>
+  <div class="section-header">
+    <span class="section-title" id="dayLabel">Schedule</span>
+    <button class="reset-btn" onclick="resetDay()">Reset day</button>
+  </div>
+  <div class="timeline" id="timeline"></div>
+  <div class="supps-section">
+    <h3>Supplements — taken today?</h3>
+    <div class="supps-row">
+      <div class="supp-pill" id="supp_fish" onclick="toggleSupp('supp_fish',this)"><div class="supp-dot"></div>Fish Oil</div>
+      <div class="supp-pill" id="supp_creatine" onclick="toggleSupp('supp_creatine',this)"><div class="supp-dot"></div>Creatine</div>
+      <div class="supp-pill" id="supp_protein" onclick="toggleSupp('supp_protein',this)"><div class="supp-dot"></div>Protein Shake</div>
+    </div>
+  </div>
+</div>
+
+<!-- CLIENTS -->
+<div class="tab-content" id="tab-clients">
+  <div class="info-box">
+    <div class="info-box-title">Dating VA — Client Board</div>
+    <p style="font-size:13px;color:var(--muted);line-height:1.6">Split each client: <b>morning round</b> (check + outreach) and <b>evening round</b> (replies + updates). Girls respond during the day — evening catches daytime replies.</p>
+  </div>
+  <div class="clients-grid" id="clientsGrid"></div>
+</div>
+
+<!-- HABITS -->
+<div class="tab-content" id="tab-habits">
+  <div class="habits-grid">
+    <div class="habit-card">
+      <h3 style="color:var(--morning)">Morning</h3>
+      <div id="habits-morning"></div>
+    </div>
+    <div class="habit-card">
+      <h3 style="color:var(--work)">Work</h3>
+      <div id="habits-work"></div>
+    </div>
+    <div class="habit-card">
+      <h3 style="color:var(--gym)">Body</h3>
+      <div id="habits-body"></div>
+    </div>
+    <div class="habit-card">
+      <h3 style="color:var(--meeting)">Evening</h3>
+      <div id="habits-evening"></div>
+    </div>
+  </div>
+</div>
+
+<!-- WEEK -->
+<div class="tab-content" id="tab-week">
+  <div class="week-grid" id="weekGrid"></div>
+</div>
+
+<!-- GOALS -->
+<div class="tab-content" id="tab-goals">
+  <div class="goals-wrap">
+    <div class="goal-section">
+      <label class="goal-label">Morning intentions — What will you dominate today?</label>
+      <textarea class="goal-input" id="morningGoals" placeholder="Top 3 priorities..."></textarea>
+    </div>
+    <div class="goal-section">
+      <label class="goal-label">Night reflection — Wins + what to improve</label>
+      <textarea class="goal-input" id="nightGoals" placeholder="What went well? What to fix tomorrow?"></textarea>
+    </div>
+    <div class="goal-section">
+      <label class="goal-label">Workout log — exercises · sets · reps · weight</label>
+      <textarea class="goal-input" id="workoutLog" placeholder="Bench 4x8 @ 60kg · Squat 3x10 @ 80kg..."></textarea>
+    </div>
+    <div class="goal-section">
+      <label class="goal-label">French — vocab / notes (persists)</label>
+      <textarea class="goal-input" id="frenchNotes" placeholder="Words, phrases, grammar..."></textarea>
+    </div>
+    <button class="save-btn" onclick="saveGoals()">Save</button>
+    <span style="margin-left:12px;font-size:13px;color:var(--accent2);font-weight:600;display:none" id="savedMsg">Saved.</span>
+  </div>
+</div>
+
+<script>
+const CLIENTS = [
+  { id:'casey',   name:'Casey',    color:'#6c5ce7' },
+  { id:'jay',     name:'Jay',      color:'#00b894' },
+  { id:'wendell', name:'Wendell',  color:'#e17055' },
+  { id:'trey',    name:'Traytola', color:'#fd79a8' },
+  { id:'juan',    name:'Juan',     color:'#0984e3' },
+];
+const CLIENT_TASKS_AM = ['Check Instagram DMs','Outreach / new matches','Check dating apps','Log morning updates'];
+const CLIENT_TASKS_PM = ['Check Instagram DMs','Reply to daytime messages','Check dating apps','Log evening updates'];
+
+const DAYS = {
+  mon:{label:'Monday',blocks:[
+    {time:'6:00',end:'6:10',title:'Wake Up',sub:'500ml water · No phone for 30 min',type:'morning',tag:'morning'},
+    {time:'6:10',end:'6:20',title:'Sunlight',sub:'10 min outside or by window',type:'morning',tag:'morning'},
+    {time:'6:20',end:'6:35',title:'Breathwork + Stretch',sub:'Box breathing or Wim Hof · Full body stretch',type:'morning',tag:'morning'},
+    {time:'6:35',end:'7:00',title:'Skincare + Cold Shower',sub:'AM skincare routine · End cold',type:'personal',tag:'personal'},
+    {time:'7:00',end:'7:30',title:'Breakfast',sub:'High protein — eggs · Greek yogurt · fruit',type:'personal',tag:'personal'},
+    {time:'7:30',end:'7:45',title:'Coffee + Meditation',sub:'5 min meditation · Set top 3 priorities',type:'morning',tag:'morning'},
+    {time:'7:45',end:'10:15',title:'Morning Client Round',sub:'Casey · Jay · Wendell · Traytola · Juan — 30 min each',type:'client',tag:'client'},
+    {time:'10:15',end:'12:15',title:'Lionbridge Block 1',sub:'2 hrs focused — no phone · 90-min ultradian sprint',type:'work',tag:'work'},
+    {time:'12:15',end:'12:30',title:'Dog Walk — Noon',sub:'10–15 min · fresh air · resets focus',type:'personal',tag:'personal'},
+    {time:'12:30',end:'13:15',title:'Lunch',sub:'High protein · Log in Calometre',type:'personal',tag:'personal'},
+    {time:'13:15',end:'14:00',title:'Dating VA Group Meeting',sub:'Mon / Wed / Fri',type:'meeting',tag:'meeting'},
+    {time:'14:00',end:'16:00',title:'Lionbridge Block 2',sub:'2 hrs · Total 4 hrs today',type:'work',tag:'work'},
+    {time:'16:00',end:'16:20',title:'Video + Admin',sub:'Check editor · Upload if ready · Quick job search',type:'work',tag:'work'},
+    {time:'16:20',end:'17:50',title:'Gym — Upper',sub:'Chest · Back · Shoulders · Arms · LOG sets',type:'gym',tag:'gym'},
+    {time:'17:50',end:'18:30',title:'Shower + Dinner',sub:'PM skincare · Log meal in Calometre',type:'personal',tag:'personal'},
+    {time:'18:00',end:'18:15',title:'Dog Walk — Evening',sub:'15 min',type:'personal',tag:'personal'},
+    {time:'18:30',end:'21:00',title:'Evening Client Round',sub:'Casey · Jay · Wendell · Traytola · Juan — 30 min each',type:'client',tag:'client'},
+    {time:'21:00',end:'21:30',title:'Reading + Gratitude',sub:'20 min reading · 3 specific things grateful for',type:'personal',tag:'personal'},
+    {time:'21:30',end:'22:00',title:'Night Writing',sub:'Reflection · Intentions for tomorrow',type:'rest',tag:'rest'},
+    {time:'22:00',end:'22:30',title:'Wind Down',sub:'Screens off · Blue light off · Sleep prep · Phone across room',type:'rest',tag:'rest'},
+    {time:'22:30',end:'6:30+',title:'Sleep',sub:'Target 8 hours · Phone out of reach',type:'rest',tag:'rest'},
+  ]},
+  tue:{label:'Tuesday',blocks:[
+    {time:'6:00',end:'6:10',title:'Wake Up',sub:'500ml water · No phone for 30 min',type:'morning',tag:'morning'},
+    {time:'6:10',end:'6:35',title:'Sunlight + Stretch',sub:'10 min sun · Breathwork · Full body stretch',type:'morning',tag:'morning'},
+    {time:'6:35',end:'7:00',title:'Skincare + Shower',sub:'AM skincare · Cold finish',type:'personal',tag:'personal'},
+    {time:'7:00',end:'7:30',title:'Breakfast',sub:'High protein · Log in Calometre',type:'personal',tag:'personal'},
+    {time:'7:30',end:'7:45',title:'Coffee + Meditation',sub:'5 min · Set intentions',type:'morning',tag:'morning'},
+    {time:'7:45',end:'10:15',title:'Morning Client Round',sub:'Casey · Jay · Wendell · Traytola · Juan',type:'client',tag:'client'},
+    {time:'10:15',end:'12:15',title:'Lionbridge Block 1',sub:'2 hrs focused',type:'work',tag:'work'},
+    {time:'12:15',end:'12:30',title:'Dog Walk — Noon',sub:'10–15 min',type:'personal',tag:'personal'},
+    {time:'12:30',end:'13:15',title:'Lunch',sub:'High protein · Log in Calometre',type:'personal',tag:'personal'},
+    {time:'13:15',end:'15:15',title:'Lionbridge Block 2',sub:'2 hrs · Total 4 hrs',type:'work',tag:'work'},
+    {time:'15:15',end:'16:15',title:'Psychology Session',sub:'Weekly — adjust time as needed',type:'personal',tag:'personal'},
+    {time:'16:15',end:'16:30',title:'Video + Admin',sub:'Check editor · Upload if ready',type:'work',tag:'work'},
+    {time:'16:30',end:'18:00',title:'Gym — Lower',sub:'Quads · Hamstrings · Glutes · Calves · LOG sets',type:'gym',tag:'gym'},
+    {time:'18:00',end:'18:30',title:'Shower + Dinner',sub:'PM skincare · Log meal',type:'personal',tag:'personal'},
+    {time:'18:15',end:'18:30',title:'Dog Walk — Evening',sub:'15 min',type:'personal',tag:'personal'},
+    {time:'18:30',end:'21:00',title:'Evening Client Round',sub:'Casey · Jay · Wendell · Traytola · Juan',type:'client',tag:'client'},
+    {time:'21:00',end:'21:30',title:'Reading + Gratitude',sub:'20 min · 3 things grateful for',type:'personal',tag:'personal'},
+    {time:'21:30',end:'22:30',title:'Wind Down + Sleep',sub:'Night writing · Screens off · In bed by 10:30',type:'rest',tag:'rest'},
+  ]},
+  wed:{label:'Wednesday',blocks:[
+    {time:'6:00',end:'6:10',title:'Wake Up',sub:'500ml water · No phone for 30 min',type:'morning',tag:'morning'},
+    {time:'6:10',end:'6:35',title:'Sunlight + Stretch',sub:'10 min sun · Breathwork',type:'morning',tag:'morning'},
+    {time:'6:35',end:'7:00',title:'Skincare + Shower',sub:'AM skincare · Cold finish',type:'personal',tag:'personal'},
+    {time:'7:00',end:'7:30',title:'Breakfast',sub:'High protein · Log in Calometre',type:'personal',tag:'personal'},
+    {time:'7:30',end:'7:45',title:'Coffee + Meditation',sub:'5 min · Top 3 priorities',type:'morning',tag:'morning'},
+    {time:'7:45',end:'10:15',title:'Morning Client Round',sub:'Casey · Jay · Wendell · Traytola · Juan',type:'client',tag:'client'},
+    {time:'10:15',end:'12:15',title:'Lionbridge Block 1',sub:'2 hrs focused',type:'work',tag:'work'},
+    {time:'12:15',end:'12:30',title:'Dog Walk — Noon',sub:'10–15 min',type:'personal',tag:'personal'},
+    {time:'12:30',end:'14:00',title:'Lunch + VA Meeting',sub:'Mon / Wed / Fri group meeting',type:'meeting',tag:'meeting'},
+    {time:'14:00',end:'16:00',title:'Lionbridge Block 2',sub:'2 hrs · Total 4 hrs',type:'work',tag:'work'},
+    {time:'16:00',end:'16:20',title:'Video + Admin + Job Search',sub:'Quick 20 min block',type:'work',tag:'work'},
+    {time:'16:20',end:'17:50',title:'Gym — Arms Day',sub:'Biceps · Triceps · Forearms · LOG sets',type:'gym',tag:'gym'},
+    {time:'17:50',end:'18:30',title:'Shower + Dinner',sub:'PM skincare · Log meal',type:'personal',tag:'personal'},
+    {time:'18:00',end:'18:15',title:'Dog Walk — Evening',sub:'15 min',type:'personal',tag:'personal'},
+    {time:'18:30',end:'21:00',title:'Evening Client Round',sub:'Casey · Jay · Wendell · Traytola · Juan',type:'client',tag:'client'},
+    {time:'21:00',end:'22:30',title:'Wind Down + Sleep',sub:'Reading · Gratitude · Screens off · In bed 10:30',type:'rest',tag:'rest'},
+  ]},
+  thu:{label:'Thursday',blocks:[
+    {time:'6:00',end:'6:10',title:'Wake Up',sub:'500ml water · No phone for 30 min',type:'morning',tag:'morning'},
+    {time:'6:10',end:'6:35',title:'Sunlight + Stretch',sub:'10 min sun · Breathwork',type:'morning',tag:'morning'},
+    {time:'6:35',end:'7:00',title:'Skincare + Shower',sub:'AM skincare · Cold finish',type:'personal',tag:'personal'},
+    {time:'7:00',end:'7:30',title:'Breakfast',sub:'High protein · Log in Calometre',type:'personal',tag:'personal'},
+    {time:'7:30',end:'7:45',title:'Coffee + Meditation',sub:'5 min · Set intentions',type:'morning',tag:'morning'},
+    {time:'7:45',end:'10:15',title:'Morning Client Round',sub:'Casey · Jay · Wendell · Traytola · Juan',type:'client',tag:'client'},
+    {time:'10:15',end:'12:15',title:'Lionbridge Block 1',sub:'2 hrs focused',type:'work',tag:'work'},
+    {time:'12:15',end:'12:30',title:'Dog Walk — Noon',sub:'10–15 min',type:'personal',tag:'personal'},
+    {time:'12:30',end:'13:15',title:'Lunch',sub:'High protein · Log in Calometre',type:'personal',tag:'personal'},
+    {time:'13:15',end:'15:15',title:'Lionbridge Block 2',sub:'2 hrs · Total 4 hrs',type:'work',tag:'work'},
+    {time:'15:15',end:'15:35',title:'Meeting — Traytola',sub:'Dating VA weekly check-in',type:'meeting',tag:'meeting'},
+    {time:'15:35',end:'16:00',title:'Video + Admin',sub:'Check editor · Upload if ready',type:'work',tag:'work'},
+    {time:'16:00',end:'17:30',title:'Gym — Lower',sub:'Quads · Hamstrings · Glutes · LOG sets',type:'gym',tag:'gym'},
+    {time:'17:30',end:'18:30',title:'Shower + Dinner',sub:'PM skincare · Log meal',type:'personal',tag:'personal'},
+    {time:'18:00',end:'18:15',title:'Dog Walk — Evening',sub:'15 min',type:'personal',tag:'personal'},
+    {time:'18:30',end:'21:00',title:'Evening Client Round',sub:'Casey · Jay · Wendell · Traytola · Juan',type:'client',tag:'client'},
+    {time:'21:00',end:'22:30',title:'Wind Down + Sleep',sub:'Reading · Gratitude · Screens off · In bed 10:30',type:'rest',tag:'rest'},
+  ]},
+  fri:{label:'Friday',blocks:[
+    {time:'6:00',end:'6:10',title:'Wake Up',sub:'500ml water · No phone for 30 min',type:'morning',tag:'morning'},
+    {time:'6:10',end:'6:35',title:'Sunlight + Stretch',sub:'10 min sun · Breathwork',type:'morning',tag:'morning'},
+    {time:'6:35',end:'7:00',title:'Skincare + Shower',sub:'AM skincare · Cold finish',type:'personal',tag:'personal'},
+    {time:'7:00',end:'7:30',title:'Breakfast',sub:'High protein · Log in Calometre',type:'personal',tag:'personal'},
+    {time:'7:30',end:'7:45',title:'Coffee + Meditation',sub:'5 min · Week intentions',type:'morning',tag:'morning'},
+    {time:'7:45',end:'10:15',title:'Morning Client Round',sub:'Casey · Jay · Wendell · Traytola · Juan',type:'client',tag:'client'},
+    {time:'10:15',end:'12:15',title:'Lionbridge Block 1',sub:'2 hrs focused',type:'work',tag:'work'},
+    {time:'12:15',end:'12:30',title:'Dog Walk — Noon',sub:'10–15 min',type:'personal',tag:'personal'},
+    {time:'12:30',end:'14:00',title:'Lunch + VA Meeting + Juan',sub:'Group meeting · Juan 1:1',type:'meeting',tag:'meeting'},
+    {time:'14:00',end:'16:00',title:'Lionbridge Block 2',sub:'2 hrs · Total 4 hrs',type:'work',tag:'work'},
+    {time:'16:00',end:'16:30',title:'Video + Admin + Job Search',sub:'End of week check',type:'work',tag:'work'},
+    {time:'16:30',end:'18:00',title:'Gym — Upper + Cardio',sub:'Upper body · 15 min cardio finisher',type:'gym',tag:'gym'},
+    {time:'18:00',end:'18:30',title:'Dog Walk — Evening',sub:'15 min · Decompress from week',type:'personal',tag:'personal'},
+    {time:'18:30',end:'21:00',title:'Evening Client Round',sub:'Casey · Jay · Wendell · Traytola · Juan',type:'client',tag:'client'},
+    {time:'21:00',end:'21:30',title:'Week Wrap',sub:'Reading · What worked · What to improve',type:'personal',tag:'personal'},
+    {time:'21:30',end:'22:30',title:'Wind Down + Sleep',sub:'Screens off · In bed by 10:30',type:'rest',tag:'rest'},
+  ]},
+  sat:{label:'Saturday',blocks:[
+    {time:'7:00',end:'7:30',title:'Easy Wake + Water',sub:'No alarm · Natural wake · No rush',type:'morning',tag:'morning'},
+    {time:'7:30',end:'8:00',title:'Sunlight + Stretch',sub:'Morning light · Easy movement',type:'morning',tag:'morning'},
+    {time:'8:00',end:'9:00',title:'Girlfriend Time',sub:'Quality time · Full presence',type:'personal',tag:'personal'},
+    {time:'9:00',end:'11:00',title:'French',sub:'2 hrs — speaking · vocab · listening',type:'work',tag:'work'},
+    {time:'11:00',end:'12:00',title:'Morning Client Round (light)',sub:'Quick 10 min check each',type:'client',tag:'client'},
+    {time:'12:00',end:'13:00',title:'Lunch + Dog Walk',sub:'Cook · Log in Calometre · 15 min walk',type:'personal',tag:'personal'},
+    {time:'13:00',end:'14:30',title:'Gym — Arms / Cardio (optional)',sub:'Core · Biceps · Triceps · 15 min cardio if missed this week',type:'gym',tag:'gym'},
+    {time:'14:30',end:'18:00',title:'Free / Family / Girlfriend',sub:'Recharge · No work · Full presence',type:'personal',tag:'personal'},
+    {time:'18:00',end:'18:30',title:'Evening Client Round (light)',sub:'Quick replies only',type:'client',tag:'client'},
+    {time:'21:00',end:'22:30',title:'Wind Down + Sleep',sub:'Rest well · Big week ahead',type:'rest',tag:'rest'},
+  ]},
+  sun:{label:'Sunday',blocks:[
+    {time:'7:00',end:'7:30',title:'Easy Wake + Water',sub:'Natural wake · Slow morning',type:'morning',tag:'morning'},
+    {time:'7:30',end:'8:00',title:'Sunlight + Stretch',sub:'Morning light · Breathwork',type:'morning',tag:'morning'},
+    {time:'8:00',end:'10:00',title:'Family Time',sub:'Mom or Dad · In person · No phone',type:'personal',tag:'personal'},
+    {time:'10:00',end:'12:00',title:'French',sub:'2 hrs — grammar · writing · review',type:'work',tag:'work'},
+    {time:'12:00',end:'13:00',title:'Lunch + Dog Walk',sub:'Cook · Log in Calometre · 15 min walk',type:'personal',tag:'personal'},
+    {time:'13:00',end:'14:00',title:'Weekly Review',sub:'What worked · What didn\'t · Lessons learned',type:'work',tag:'work'},
+    {time:'14:00',end:'16:00',title:'Week Planning',sub:'Set goals for Mon · Block calendar · Intentions',type:'work',tag:'work'},
+    {time:'16:00',end:'18:00',title:'Rest + Girlfriend',sub:'Recharge · Full presence · No work',type:'personal',tag:'personal'},
+    {time:'18:00',end:'18:30',title:'Evening Client Check',sub:'Light round — replies only',type:'client',tag:'client'},
+    {time:'21:00',end:'22:30',title:'Wind Down + Sleep',sub:'Early rest · Big week starts tomorrow',type:'rest',tag:'rest'},
+  ]}
+};
+
+const HABITS = {
+  morning:[
+    '500ml water before touching phone',
+    'No phone — first 30 min',
+    'Raw honey',
+    '10 min sunlight',
+    'Breathwork (box / Wim Hof)',
+    'Full body stretch',
+    'Cold shower',
+    'Breakfast (high protein)',
+    '5 min meditation',
+    'Coffee after 90 min of waking',
+  ],
+  work:[
+    'Morning client round done',
+    'Evening client round done',
+    '4 hrs Lionbridge goal hit',
+    'Video upload checked',
+    'No phone during work blocks',
+    'Job search (30 min, 3x/week)',
+    'All meals logged in Calometre',
+  ],
+  body:[
+    'Gym session done',
+    'Workout logged (sets · reps · weight)',
+    'Hit 170g protein goal',
+    'Fish oil taken',
+    'Creatine taken',
+    'Protein shake taken',
+    '15 min cardio (2x/week)',
+    'Noon dog walk',
+    'Evening dog walk',
+  ],
+  evening:[
+    'Night Shift / blue light on by 8PM',
+    'Evening client round done',
+    'PM skincare routine',
+    'Screens off by 9:30',
+    'Reading — 20 min',
+    'Gratitude — 3 specific things',
+    'Night writing / reflection',
+    'Phone charged across room (not bed)',
+    'In bed by 10:30PM',
+  ]
+};
+
+const WEEK_EVENTS = {
+  mon:[{label:'6AM Ritual',cls:'we-morning'},{label:'7:45 Clients AM',cls:'we-client'},{label:'10:15 Lionbridge',cls:'we-work'},{label:'1PM VA Meeting',cls:'we-meeting'},{label:'4:20 Gym Upper',cls:'we-gym'},{label:'6:30 Clients PM',cls:'we-client'}],
+  tue:[{label:'6AM Ritual',cls:'we-morning'},{label:'7:45 Clients AM',cls:'we-client'},{label:'10:15 Lionbridge',cls:'we-work'},{label:'3:15 Psychology',cls:'we-personal'},{label:'Gym Lower',cls:'we-gym'},{label:'6:30 Clients PM',cls:'we-client'}],
+  wed:[{label:'6AM Ritual',cls:'we-morning'},{label:'7:45 Clients AM',cls:'we-client'},{label:'10:15 Lionbridge',cls:'we-work'},{label:'12:30 VA Meeting',cls:'we-meeting'},{label:'4:20 Gym Arms',cls:'we-gym'},{label:'6:30 Clients PM',cls:'we-client'}],
+  thu:[{label:'6AM Ritual',cls:'we-morning'},{label:'7:45 Clients AM',cls:'we-client'},{label:'10:15 Lionbridge',cls:'we-work'},{label:'3:15 Traytola',cls:'we-meeting'},{label:'4PM Gym Lower',cls:'we-gym'},{label:'6:30 Clients PM',cls:'we-client'}],
+  fri:[{label:'6AM Ritual',cls:'we-morning'},{label:'7:45 Clients AM',cls:'we-client'},{label:'10:15 Lionbridge',cls:'we-work'},{label:'12:30 VA+Juan',cls:'we-meeting'},{label:'4:30 Gym+Cardio',cls:'we-gym'},{label:'6:30 Clients PM',cls:'we-client'}],
+  sat:[{label:'French 2h',cls:'we-work'},{label:'Girlfriend',cls:'we-personal'},{label:'Gym (opt)',cls:'we-gym'},{label:'Light clients',cls:'we-client'}],
+  sun:[{label:'Family time',cls:'we-personal'},{label:'French 2h',cls:'we-work'},{label:'Weekly review',cls:'we-work'},{label:'Week planning',cls:'we-work'}]
+};
+
+const DAY_KEYS = ['mon','tue','wed','thu','fri','sat','sun'];
+const DAY_SHORT = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+
+// ── STATE ──────────────────────────────────────────────────
+let state = {};
+let currentDay = null;
+
+function todayISO() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+function todayKey() {
+  return ['sun','mon','tue','wed','thu','fri','sat'][new Date().getDay()];
+}
+
+function loadState() {
+  try {
+    const raw = localStorage.getItem('thomas_routine_v3');
+    if (!raw) { state = { date: todayISO() }; return; }
+    const parsed = JSON.parse(raw);
+    if (parsed.date !== todayISO()) {
+      // New day — keep only non-daily data
+      const fresh = { date: todayISO() };
+      Object.keys(parsed).forEach(k => {
+        if (k === 'french_notes') fresh[k] = parsed[k];
+      });
+      state = fresh;
+      persist();
+    } else {
+      state = parsed;
+    }
+  } catch(e) { state = { date: todayISO() }; }
+}
+
+function persist() {
+  state.date = todayISO();
+  localStorage.setItem('thomas_routine_v3', JSON.stringify(state));
+}
+
+// ── INIT ───────────────────────────────────────────────────
+(function init() {
+  loadState();
+  const now = new Date();
+  document.getElementById('dateDisplay').textContent =
+    now.toLocaleDateString('en-US', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
+  // Load supps
+  ['supp_fish','supp_creatine','supp_protein'].forEach(k => {
+    if (state[k]) document.getElementById(k).classList.add('taken');
+  });
+  setDay(todayKey());
+})();
+
+function switchTab(tab) {
+  const tabs = ['today','clients','habits','week','goals'];
+  document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', tabs[i] === tab));
+  document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+  document.getElementById('tab-'+tab).classList.add('active');
+  if (tab==='week') renderWeek();
+  if (tab==='habits') renderHabits();
+  if (tab==='clients') renderClients();
+  if (tab==='goals') loadGoals();
+}
+
+// ── TODAY ──────────────────────────────────────────────────
+function setDay(day) {
+  currentDay = day;
+  document.querySelectorAll('.day-btn').forEach((b,i) => b.classList.toggle('active', DAY_KEYS[i]===day));
+  document.getElementById('dayLabel').textContent = DAYS[day].label;
+  renderTimeline(day);
+  updateProgress(day);
+}
+
+function renderTimeline(day) {
+  const blocks = DAYS[day].blocks;
+  const done = state['s_'+day] || {};
+  const tl = document.getElementById('timeline');
+  tl.innerHTML = '';
+  blocks.forEach((b,i) => {
+    const isDone = !!done[i];
+    const div = document.createElement('div');
+    div.className = `time-block ${b.type}${isDone?' done':''}`;
+    div.innerHTML = `
+      <div class="time-col">${b.time}<br><span style="opacity:.6;font-size:10px">${b.end}</span></div>
+      <div class="block-body">
+        <div class="block-title">${b.title}</div>
+        ${b.sub?`<div class="block-sub">${b.sub}</div>`:''}
+      </div>
+      <span class="block-tag tag-${b.tag}">${b.tag}</span>
+      <button class="check-btn${isDone?' checked':''}" onclick="toggleBlock('${day}',${i})">✓</button>`;
+    tl.appendChild(div);
+  });
+}
+
+function toggleBlock(day,i) {
+  if (!state['s_'+day]) state['s_'+day]={};
+  state['s_'+day][i] = !state['s_'+day][i];
+  persist(); renderTimeline(day); updateProgress(day);
+}
+
+function updateProgress(day) {
+  const blocks = DAYS[day].blocks;
+  const done = state['s_'+day]||{};
+  const count = Object.values(done).filter(Boolean).length;
+  const pct = blocks.length ? Math.round(count/blocks.length*100) : 0;
+  document.getElementById('progressFill').style.width = pct+'%';
+  document.getElementById('progressText').textContent = `${count} / ${blocks.length} done`;
+}
+
+function resetDay() {
+  if (!currentDay) return;
+  state['s_'+currentDay]={};
+  persist(); renderTimeline(currentDay); updateProgress(currentDay);
+}
+
+function toggleSupp(key, el) {
+  el.classList.toggle('taken');
+  state[key] = el.classList.contains('taken');
+  persist();
+}
+
+// ── CLIENTS ────────────────────────────────────────────────
+function renderClients() {
+  const grid = document.getElementById('clientsGrid');
+  grid.innerHTML = '';
+  CLIENTS.forEach(cl => {
+    const cs = state['cl_'+cl.id]||{};
+    const total = CLIENT_TASKS_AM.length + CLIENT_TASKS_PM.length;
+    const done = Object.values(cs).filter(Boolean).length;
+    const allDone = done===total;
+    const amRows = CLIENT_TASKS_AM.map((t,i)=>{
+      const k='am'+i, d=!!cs[k];
+      return `<div class="client-task${d?' done':''}" onclick="toggleClientTask('${cl.id}','${k}')"><div class="ct-check">✓</div><span class="ct-name">${t}</span></div>`;
+    }).join('');
+    const pmRows = CLIENT_TASKS_PM.map((t,i)=>{
+      const k='pm'+i, d=!!cs[k];
+      return `<div class="client-task${d?' done':''}" onclick="toggleClientTask('${cl.id}','${k}')"><div class="ct-check">✓</div><span class="ct-name">${t}</span></div>`;
+    }).join('');
+    const card = document.createElement('div');
+    card.className = 'client-card'+(allDone?' all-done':'');
+    card.innerHTML = `
+      <div class="client-header">
+        <div class="client-avatar" style="background:${cl.color}">${cl.name[0]}</div>
+        <div><div class="client-name">${cl.name}</div><div class="client-progress">${done}/${total} tasks</div></div>
+        <div class="client-status${allDone?' done-status':''}">${allDone?'Done ✓':'In Progress'}</div>
+      </div>
+      <div class="client-rounds">
+        <div class="round-label">Morning Round</div>${amRows}
+        <div class="round-label" style="margin-top:10px">Evening Round</div>${pmRows}
+      </div>`;
+    grid.appendChild(card);
+  });
+}
+
+function toggleClientTask(id, key) {
+  const k = 'cl_'+id;
+  if (!state[k]) state[k]={};
+  state[k][key] = !state[k][key];
+  persist(); renderClients();
+}
+
+// ── HABITS ─────────────────────────────────────────────────
+function renderHabits() {
+  const today = todayKey();
+  const hs = state['h_'+today]||{};
+  Object.keys(HABITS).forEach(cat => {
+    const el = document.getElementById('habits-'+cat);
+    if (!el) return;
+    el.innerHTML = '';
+    HABITS[cat].forEach((h,i) => {
+      const key = cat+'_'+i, done = !!hs[key];
+      const div = document.createElement('div');
+      div.className = 'habit-item'+(done?' done':'');
+      div.innerHTML = `<div class="habit-check">✓</div><span class="habit-name">${h}</span>`;
+      div.onclick = () => toggleHabit(today, key);
+      el.appendChild(div);
+    });
+  });
+}
+
+function toggleHabit(day, key) {
+  const k = 'h_'+day;
+  if (!state[k]) state[k]={};
+  state[k][key] = !state[k][key];
+  persist(); renderHabits();
+}
+
+// ── WEEK ───────────────────────────────────────────────────
+function renderWeek() {
+  const today = todayKey();
+  const grid = document.getElementById('weekGrid');
+  grid.innerHTML = '';
+  DAY_KEYS.forEach((key,i) => {
+    const div = document.createElement('div');
+    div.className = 'week-day'+(key===today?' today':'');
+    const evs = (WEEK_EVENTS[key]||[]).map(e=>`<div class="week-event ${e.cls}">${e.label}</div>`).join('');
+    div.innerHTML = `<div class="week-day-name">${DAY_SHORT[i]}</div>${evs}`;
+    grid.appendChild(div);
+  });
+}
+
+// ── GOALS ──────────────────────────────────────────────────
+function loadGoals() {
+  const d = todayISO();
+  document.getElementById('morningGoals').value = state['gm_'+d]||'';
+  document.getElementById('nightGoals').value = state['gn_'+d]||'';
+  document.getElementById('workoutLog').value = state['wl_'+d]||'';
+  document.getElementById('frenchNotes').value = state['french_notes']||'';
+}
+
+function saveGoals() {
+  const d = todayISO();
+  state['gm_'+d] = document.getElementById('morningGoals').value;
+  state['gn_'+d] = document.getElementById('nightGoals').value;
+  state['wl_'+d] = document.getElementById('workoutLog').value;
+  state['french_notes'] = document.getElementById('frenchNotes').value;
+  persist();
+  const msg = document.getElementById('savedMsg');
+  msg.style.display='inline';
+  setTimeout(()=>msg.style.display='none', 2000);
+}
+</script>
+</body>
+</html>
